@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>МАНГАЛOFT — Трекер долгов</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;padding:16px;max-width:740px;margin:0 auto}
+h1{font-size:18px;font-weight:500;margin-bottom:2px}
+.sub{font-size:13px;color:#888;margin-bottom:14px}
+.sync{display:flex;align-items:center;gap:8px;font-size:12px;color:#666;margin-bottom:14px;padding:8px 12px;background:#fff;border:0.5px solid #e0e0d8;border-radius:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:#1a7a4a;flex-shrink:0}
+.dot.spin{background:#854f0b;animation:pulse 1s infinite}
+.dot.err{background:#a32d2d}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.25rem}
+.mc{background:#ebebea;border-radius:8px;padding:13px 15px}
+.ml{font-size:12px;color:#666;margin-bottom:5px;line-height:1.3}
+.mv{font-size:20px;font-weight:500}
+.ms{font-size:11px;color:#888;margin-top:3px}
+.mv.red{color:#a32d2d}.mv.green{color:#1a7a4a}.mv.blue{color:#185fa5}
+.card{background:#fff;border:0.5px solid #e0e0d8;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.ct{font-size:12px;font-weight:500;color:#888;margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em;display:flex;justify-content:space-between;align-items:center}
+.debt-item{border-top:0.5px solid #ebebea;padding:12px 0}
+.debt-item:first-of-type{border-top:none}
+.debt-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.debt-name{font-weight:500;font-size:14px}
+.debt-owner{font-size:11px;color:#888;margin-top:2px}
+.debt-balance{font-size:18px;font-weight:500;text-align:right}
+.debt-balance.closed{color:#1a7a4a;font-size:14px}
+.debt-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;font-size:12px}
+.debt-meta-item{background:#f5f5f3;border-radius:6px;padding:6px 8px}
+.debt-meta-label{color:#888;margin-bottom:2px;font-size:11px}
+.debt-meta-value{font-weight:500;color:#1a1a1a}
+.debt-meta-value.red{color:#a32d2d}
+.debt-meta-value.green{color:#1a7a4a}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;margin-left:6px;vertical-align:middle}
+.badge.red{background:#fde8e8;color:#a32d2d}
+.badge.orange{background:#fef3e2;color:#854f0b}
+.badge.green{background:#eaf3de;color:#3b6d11}
+.badge.blue{background:#e6f1fb;color:#185fa5}
+.badge.closed{background:#eaf3de;color:#3b6d11}
+.bg{height:6px;background:#ebebea;border-radius:3px;overflow:hidden;margin:8px 0 4px}
+.bf{height:100%;border-radius:3px}
+.actions{display:flex;gap:8px;margin-top:10px}
+.act-btn{font-size:12px;padding:5px 12px;border:0.5px solid #ccc;border-radius:6px;background:#fff;cursor:pointer;flex:1;text-align:center}
+.act-btn:hover{background:#f5f5f3}
+.act-btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.act-btn.primary:hover{opacity:.85}
+.act-btn.danger{background:#fde8e8;color:#a32d2d;border-color:#f09595}
+.edit-area{display:none;margin-top:10px;padding:12px;background:#f5f5f3;border-radius:8px}
+.edit-area.open{display:block}
+.ir{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ir label{font-size:12px;color:#666;min-width:120px}
+.ir input{flex:1;font-size:13px;padding:5px 8px;border:0.5px solid #ccc;border-radius:6px;background:#fff;color:#1a1a1a}
+.save-btn{font-size:12px;padding:6px 14px;border:none;border-radius:6px;background:#1a1a1a;color:#fff;cursor:pointer;margin-right:6px}
+.cancel-btn{font-size:12px;padding:6px 14px;border:0.5px solid #ccc;border-radius:6px;background:transparent;color:#666;cursor:pointer}
+.pay-area{display:none;margin-top:10px;padding:12px;background:#f0f8ff;border-radius:8px;border:0.5px solid #b8d8f0}
+.pay-area.open{display:block}
+.hist-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:0.5px solid #ebebea;font-size:12px}
+.hist-item:first-of-type{border-top:none}
+.sn{font-size:12px;padding:4px 0;display:none}
+.sn.ok{color:#1a7a4a}.sn.er{color:#a32d2d}
+.tabs{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
+.tb{padding:6px 14px;font-size:13px;border:0.5px solid #ccc;border-radius:8px;background:#fff;color:#666;cursor:pointer}
+.tb.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.dv{height:0.5px;background:#ebebea;margin:.75rem 0}
+.empty{font-size:13px;color:#aaa;padding:8px 0}
+.priority-badge{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:600;margin-left:4px}
+.p1{background:#fde8e8;color:#a32d2d}
+.p2{background:#fef3e2;color:#854f0b}
+.p3{background:#e6f1fb;color:#185fa5}
+.due-soon{color:#854f0b;font-weight:500}
+.due-overdue{color:#a32d2d;font-weight:500}
+@media(max-width:500px){
+  .debt-meta{grid-template-columns:1fr 1fr}
+  .ir{flex-direction:column;align-items:flex-start}
+  .ir label{min-width:unset}
+  .ir input{width:100%}
+}
+</style>
+</head>
+<body>
+<h1>МАНГАЛOFT</h1>
+<p class="sub">Трекер долгов · синхронизация с Google Sheets</p>
+<div class="sync"><div class="dot spin" id="sdot"></div><span id="stxt">Загрузка данных...</span></div>
+
+<div class="tabs">
+  <button class="tb on" onclick="sv('debts')">Долги</button>
+  <button class="tb" onclick="sv('history')">История</button>
+  <button class="tb" onclick="sv('summary')">Итого</button>
+</div>
+
+<div id="v-debts"></div>
+<div id="v-history" style="display:none"></div>
+<div id="v-summary" style="display:none"></div>
+
+<script>
+const API='https://script.google.com/macros/s/AKfycbw9rAYFIuDUJP8ZbGgygSsoqkefZXlzNR83s_XVJxzHA3ZszXUk1cGcvqXhl2R5Ya1JZQ/exec';
+
+const INITIAL_DEBTS=[
+  {id:'gpb_m', name:'Газпромбанк карта', owner:'Михаил', balance:135503, rate:39.7, minPay:9957, dueDay:1, color:'red', group:'card'},
+  {id:'vtb_m_loan', name:'ВТБ кредит', owner:'Михаил', balance:0, rate:39.9, minPay:5000, dueDay:20, color:'red', group:'card'},
+  {id:'tbank_m', name:'Т-Банк S7', owner:'Михаил', balance:146016, rate:23.9, minPay:7600, dueDay:7, color:'orange', group:'card'},
+  {id:'gpb_a', name:'Газпромбанк карта', owner:'Анастасия', balance:239222, rate:33, minPay:13427, dueDay:1, color:'orange', group:'card'},
+  {id:'alfa_a', name:'Альфа-Банк карта', owner:'Анастасия', balance:368618, rate:37.5, minPay:11900, dueDay:5, color:'red', group:'card'},
+  {id:'sber_a', name:'Сбербанк карта', owner:'Анастасия', balance:158367, rate:24, minPay:7772, dueDay:1, color:'blue', group:'card'},
+  {id:'vtb_a', name:'ВТБ карта', owner:'Анастасия', balance:72331, rate:0, minPay:4400, dueDay:20, color:'green', group:'card', note:'0% до 22.06'},
+  {id:'auto', name:'АвтоЛайт', owner:'Общий', balance:2349484, rate:21.9, minPay:85453, dueDay:12, color:'blue', group:'auto'},
+  {id:'oleg', name:'Олег (частный)', owner:'Партнёр', balance:1240000, rate:0, minPay:0, dueDay:0, color:'green', group:'private'},
+  {id:'vlad', name:'Влад (частный)', owner:'Партнёр', balance:500000, rate:0, minPay:0, dueDay:0, color:'green', group:'private'},
+];
+
+let view='debts', debts=[], history=[], ready=false;
+let totalPaid=0;
+
+function fmt(n){return Math.round(n).toLocaleString('ru-RU')+' ₽'}
+function tds(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function today(){return new Date()}
+
+function daysUntil(day){
+  if(!day) return null;
+  const now=new Date(), d=new Date(now.getFullYear(),now.getMonth(),day);
+  if(d<now) d.setMonth(d.getMonth()+1);
+  return Math.ceil((d-now)/(1000*60*60*24));
+}
+
+function dueBadge(day){
+  if(!day) return '';
+  const days=daysUntil(day);
+  if(days<=0) return `<span class="due-overdue">Просрочен!</span>`;
+  if(days<=3) return `<span class="due-soon">Через ${days} дн.</span>`;
+  if(days<=7) return `<span class="due-soon">Через ${days} дн.</span>`;
+  return `<span style="color:#888;font-size:12px">${day}-го числа</span>`;
+}
+
+function ss2(status,text){
+  const dot=document.getElementById('sdot'),txt=document.getElementById('stxt');
+  if(!dot||!txt)return;
+  dot.className='dot'+(status==='load'?' spin':status==='err'?' err':'');
+  txt.textContent=text;
+}
+
+async function apiCall(data){
+  const r=await fetch(API+'?t='+Date.now(),{method:'POST',body:JSON.stringify(data)});
+  return r.json();
+}
+
+async function load(){
+  ss2('load','Загрузка из Google Sheets...');
+  try{
+    const res=await apiCall({type:'getDebts'});
+    if(res.debts&&res.debts.length>0){
+      debts=res.debts;
+    } else {
+      debts=INITIAL_DEBTS.map(d=>({...d}));
+    }
+    if(res.history) history=res.history;
+    totalPaid=history.reduce((s,h)=>s+(+h.amount||0),0);
+    ss2('ok','✓ Синхронизировано с Google Sheets');
+  }catch(e){
+    debts=INITIAL_DEBTS.map(d=>({...d}));
+    ss2('err','Нет соединения — работаю офлайн');
+  }
+  ready=true;
+  sv('debts');
+}
+
+async function persist(data){
+  ss2('load','Сохраняю...');
+  try{
+    await apiCall(data);
+    ss2('ok','✓ Сохранено в Google Sheets');
+  }catch(e){
+    ss2('err','Ошибка сохранения');
+  }
+}
+
+function sv(v){
+  view=v;
+  ['debts','history','summary'].forEach((n,i)=>{
+    document.querySelectorAll('.tb')[i].classList.toggle('on',n===v);
+    document.getElementById('v-'+n).style.display=n===v?'block':'none';
+  });
+  if(!ready)return;
+  if(v==='debts')rDebts();
+  if(v==='history')rHistory();
+  if(v==='summary')rSummary();
+}
+
+function rDebts(){
+  const activeDebts=debts.filter(d=>!d.closed);
+  const closedDebts=debts.filter(d=>d.closed);
+  const totalDebt=activeDebts.reduce((s,d)=>s+(+d.balance||0),0);
+  const totalMin=activeDebts.reduce((s,d)=>s+(+d.minPay||0),0);
+  const totalInterest=activeDebts.reduce((s,d)=>s+(+d.balance||0)*(+d.rate||0)/100/12,0);
+
+  document.getElementById('v-debts').innerHTML=`
+    <div class="metrics">
+      <div class="mc"><div class="ml">Общий долг</div><div class="mv red">${fmt(totalDebt)}</div><div class="ms">${activeDebts.length} активных</div></div>
+      <div class="mc"><div class="ml">Платежей/мес</div><div class="mv red">${fmt(totalMin)}</div><div class="ms">обязательные</div></div>
+      <div class="mc"><div class="ml">Процентов/мес</div><div class="mv red">${fmt(Math.round(totalInterest))}</div><div class="ms">сгорает</div></div>
+      <div class="mc"><div class="ml">Всего погашено</div><div class="mv green">${fmt(totalPaid)}</div><div class="ms">за всё время</div></div>
+    </div>
+    <div class="card">
+      <div class="ct"><span>Кредитные карты и кредиты</span></div>
+      <div id="cards-list">${activeDebts.filter(d=>d.group==='card').map(d=>debtCard(d)).join('')}</div>
+    </div>
+    <div class="card">
+      <div class="ct"><span>Автокредит</span></div>
+      <div id="auto-list">${activeDebts.filter(d=>d.group==='auto').map(d=>debtCard(d)).join('')}</div>
+    </div>
+    <div class="card">
+      <div class="ct"><span>Частные займы</span></div>
+      <div id="private-list">${activeDebts.filter(d=>d.group==='private').map(d=>debtCard(d)).join('')}</div>
+    </div>
+    ${closedDebts.length>0?`<div class="card">
+      <div class="ct"><span>Закрытые долги ✅</span></div>
+      ${closedDebts.map(d=>`<div class="debt-item">
+        <div class="debt-header">
+          <div><div class="debt-name" style="text-decoration:line-through;color:#aaa">${d.name}</div><div class="debt-owner">${d.owner}</div></div>
+          <div class="debt-balance closed">Закрыт ✓</div>
+        </div>
+      </div>`).join('')}
+    </div>`:''}
+  `;
+}
+
+function debtCard(d){
+  const interest=Math.round((+d.balance||0)*(+d.rate||0)/100/12);
+  const rateColor=d.rate>=35?'red':d.rate>=25?'orange':d.rate>0?'blue':'green';
+  const rateLabel=d.rate>0?`${d.rate}%`:(d.note||'0%');
+  const days=d.dueDay?daysUntil(d.dueDay):null;
+  const dueColor=days!==null?(days<=3?'#a32d2d':days<=7?'#854f0b':'#888'):'#888';
+
+  return `<div class="debt-item" id="di-${d.id}">
+    <div class="debt-header">
+      <div>
+        <div class="debt-name">${d.name} <span class="badge ${rateColor}">${rateLabel}</span></div>
+        <div class="debt-owner">${d.owner}${d.note&&d.rate>0?' · '+d.note:''}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="debt-balance">${fmt(+d.balance||0)}</div>
+        ${d.dueDay?`<div style="font-size:11px;color:${dueColor};margin-top:2px">${dueBadge(d.dueDay)}</div>`:''}
+      </div>
+    </div>
+    <div class="debt-meta">
+      <div class="debt-meta-item"><div class="debt-meta-label">Мин. платёж</div><div class="debt-meta-value red">${d.minPay?fmt(+d.minPay):'—'}</div></div>
+      <div class="debt-meta-item"><div class="debt-meta-label">Проценты/мес</div><div class="debt-meta-value red">${d.rate>0?fmt(interest):'—'}</div></div>
+      <div class="debt-meta-item"><div class="debt-meta-label">Дата платежа</div><div class="debt-meta-value">${d.dueDay?d.dueDay+'-е число':'—'}</div></div>
+    </div>
+    <div class="actions">
+      <button class="act-btn primary" onclick="togglePay('${d.id}')">Внести платёж</button>
+      <button class="act-btn" onclick="toggleEdit('${d.id}')">Изменить</button>
+      <button class="act-btn danger" onclick="closeDebt('${d.id}')">Закрыт</button>
+    </div>
+    <div class="pay-area" id="pay-${d.id}">
+      <div class="ir"><label>Сумма платежа ₽</label><input type="number" id="pay-amt-${d.id}" placeholder="${d.minPay||''}" value="${d.minPay||''}"></div>
+      <div class="ir"><label>Дата платежа</label><input type="date" id="pay-date-${d.id}" value="${tds()}" max="${tds()}"></div>
+      <div class="ir"><label>Комментарий</label><input type="text" id="pay-note-${d.id}" placeholder="Минимальный платёж"></div>
+      <button class="save-btn" onclick="makePay('${d.id}')">Внести</button>
+      <button class="cancel-btn" onclick="togglePay('${d.id}')">Отмена</button>
+      <div class="sn" id="pay-sn-${d.id}"></div>
+    </div>
+    <div class="edit-area" id="edit-${d.id}">
+      <div class="ir"><label>Остаток долга ₽</label><input type="number" id="ed-bal-${d.id}" value="${d.balance||0}"></div>
+      <div class="ir"><label>Мин. платёж ₽</label><input type="number" id="ed-pay-${d.id}" value="${d.minPay||0}"></div>
+      <div class="ir"><label>Ставка % годовых</label><input type="number" id="ed-rate-${d.id}" value="${d.rate||0}" step="0.1"></div>
+      <div class="ir"><label>День платежа</label><input type="number" id="ed-day-${d.id}" value="${d.dueDay||0}" min="1" max="31" placeholder="1-31"></div>
+      <div class="ir"><label>Заметка</label><input type="text" id="ed-note-${d.id}" value="${d.note||''}"></div>
+      <button class="save-btn" onclick="saveEdit('${d.id}')">Сохранить</button>
+      <button class="cancel-btn" onclick="toggleEdit('${d.id}')">Отмена</button>
+      <div class="sn" id="ed-sn-${d.id}"></div>
+    </div>
+  </div>`;
+}
+
+function togglePay(id){
+  const el=document.getElementById('pay-'+id);if(!el)return;
+  const was=el.classList.contains('open');
+  document.querySelectorAll('.pay-area').forEach(x=>x.classList.remove('open'));
+  document.querySelectorAll('.edit-area').forEach(x=>x.classList.remove('open'));
+  if(!was)el.classList.add('open');
+}
+
+function toggleEdit(id){
+  const el=document.getElementById('edit-'+id);if(!el)return;
+  const was=el.classList.contains('open');
+  document.querySelectorAll('.pay-area').forEach(x=>x.classList.remove('open'));
+  document.querySelectorAll('.edit-area').forEach(x=>x.classList.remove('open'));
+  if(!was)el.classList.add('open');
+}
+
+async function makePay(id){
+  const debt=debts.find(d=>d.id===id);if(!debt)return;
+  const amt=parseFloat(document.getElementById('pay-amt-'+id).value)||0;
+  const date=document.getElementById('pay-date-'+id).value;
+  const note=document.getElementById('pay-note-'+id).value||'Платёж';
+  if(!amt)return;
+  debt.balance=Math.max(0,(+debt.balance||0)-amt);
+  totalPaid+=amt;
+  const rec={id:Date.now(),debtId:id,debtName:debt.name,owner:debt.owner,amount:amt,date,note};
+  history.unshift(rec);
+  const sn=document.getElementById('pay-sn-'+id);
+  if(sn){sn.textContent='Сохраняю...';sn.className='sn ok';sn.style.display='block';}
+  try{
+    await persist({type:'saveDebt',debt:{...debt}});
+    await apiCall({type:'addHistory',...rec});
+    if(sn){sn.textContent='✓ Сохранено';setTimeout(()=>{sn.style.display='none';togglePay(id);rDebts();},1000);}
+  }catch(e){
+    if(sn){sn.textContent='Ошибка';sn.className='sn er';setTimeout(()=>sn.style.display='none',2000);}
+  }
+}
+
+async function saveEdit(id){
+  const debt=debts.find(d=>d.id===id);if(!debt)return;
+  debt.balance=parseFloat(document.getElementById('ed-bal-'+id).value)||0;
+  debt.minPay=parseFloat(document.getElementById('ed-pay-'+id).value)||0;
+  debt.rate=parseFloat(document.getElementById('ed-rate-'+id).value)||0;
+  debt.dueDay=parseInt(document.getElementById('ed-day-'+id).value)||0;
+  debt.note=document.getElementById('ed-note-'+id).value||'';
+  const sn=document.getElementById('ed-sn-'+id);
+  if(sn){sn.textContent='Сохраняю...';sn.className='sn ok';sn.style.display='block';}
+  try{
+    await persist({type:'saveDebt',debt:{...debt}});
+    if(sn){sn.textContent='✓ Сохранено';setTimeout(()=>{sn.style.display='none';toggleEdit(id);rDebts();},1000);}
+  }catch(e){
+    if(sn){sn.textContent='Ошибка';sn.className='sn er';setTimeout(()=>sn.style.display='none',2000);}
+    rDebts();
+  }
+}
+
+async function closeDebt(id){
+  const debt=debts.find(d=>d.id===id);if(!debt)return;
+  if(!confirm(`Закрыть долг "${debt.name}"?`))return;
+  debt.closed=true;debt.balance=0;
+  try{await persist({type:'saveDebt',debt:{...debt}});}catch(e){}
+  rDebts();
+}
+
+function rHistory(){
+  document.getElementById('v-history').innerHTML=`
+    <div class="card">
+      <div class="ct"><span>История платежей</span></div>
+      ${history.length===0?'<div class="empty">Платежей пока нет</div>':
+      history.slice(0,50).map(h=>`<div class="hist-item">
+        <span><span style="font-weight:500">${h.debtName}</span> <span style="color:#888">(${h.owner})</span>${h.note?` · ${h.note}`:''}</span>
+        <span style="display:flex;align-items:center;gap:10px">
+          <span style="font-weight:500;color:#1a7a4a">−${fmt(+h.amount)}</span>
+          <span style="color:#888;font-size:11px">${h.date}</span>
+        </span>
+      </div>`).join('')}
+    </div>`;
+}
+
+function rSummary(){
+  const active=debts.filter(d=>!d.closed);
+  const cards=active.filter(d=>d.group==='card');
+  const auto=active.filter(d=>d.group==='auto');
+  const priv=active.filter(d=>d.group==='private');
+  const sum=arr=>arr.reduce((s,d)=>s+(+d.balance||0),0);
+  const sumPay=arr=>arr.reduce((s,d)=>s+(+d.minPay||0),0);
+
+  const sorted=[...active].filter(d=>d.rate>0).sort((a,b)=>b.rate-a.rate);
+
+  document.getElementById('v-summary').innerHTML=`
+    <div class="metrics">
+      <div class="mc"><div class="ml">Карты и кредиты</div><div class="mv red">${fmt(sum(cards))}</div><div class="ms">${fmt(sumPay(cards))}/мес</div></div>
+      <div class="mc"><div class="ml">Автокредит</div><div class="mv red">${fmt(sum(auto))}</div><div class="ms">${fmt(sumPay(auto))}/мес</div></div>
+      <div class="mc"><div class="ml">Частные займы</div><div class="mv blue">${fmt(sum(priv))}</div><div class="ms">без %</div></div>
+      <div class="mc"><div class="ml">Всего погашено</div><div class="mv green">${fmt(totalPaid)}</div><div class="ms">за всё время</div></div>
+    </div>
+    <div class="card">
+      <div class="ct"><span>Приоритет погашения (по ставке)</span></div>
+      ${sorted.map((d,i)=>{
+        const pct=Math.min(100,Math.round((+d.balance)/(sum(active))*100));
+        const c=d.rate>=35?'#a32d2d':d.rate>=25?'#854f0b':'#185fa5';
+        return `<div style="padding:8px 0;border-top:${i>0?'0.5px solid #ebebea':'none'}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:13px;font-weight:500">${i+1}. ${d.name} <span style="color:#888;font-weight:400">(${d.owner})</span></span>
+            <span style="font-size:13px;font-weight:500;color:${c}">${d.rate}%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px">
+            <span>Остаток: ${fmt(+d.balance)}</span>
+            <span>~${fmt(Math.round((+d.balance||0)*(+d.rate)/100/12))}/мес на %</span>
+          </div>
+          <div class="bg"><div class="bf" style="width:${pct}%;background:${c}"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="card">
+      <div class="ct"><span>Ближайшие платежи</span></div>
+      ${active.filter(d=>d.dueDay>0&&d.minPay>0).sort((a,b)=>{
+        const da=daysUntil(a.dueDay)||99,db=daysUntil(b.dueDay)||99;
+        return da-db;
+      }).map(d=>{
+        const days=daysUntil(d.dueDay);
+        const c=days<=3?'#a32d2d':days<=7?'#854f0b':'#1a1a1a';
+        return `<div class="hist-item">
+          <span><span style="font-weight:500">${d.name}</span> <span style="color:#888">(${d.owner})</span></span>
+          <span style="display:flex;align-items:center;gap:10px">
+            <span style="font-weight:500;color:#a32d2d">${fmt(+d.minPay)}</span>
+            <span style="color:${c};font-size:11px;font-weight:500">${days<=0?'Сегодня!':days===1?'Завтра':days+' дн.'}</span>
+          </span>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+load();
+</script>
+</body>
+</html>
