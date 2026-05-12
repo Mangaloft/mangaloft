@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>МАНГАЛOFT — Дашборд</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;padding:16px;max-width:740px;margin:0 auto}
+h1{font-size:18px;font-weight:500;margin-bottom:2px}
+.sub{font-size:13px;color:#888;margin-bottom:14px}
+.sync{display:flex;align-items:center;gap:8px;font-size:12px;color:#666;margin-bottom:14px;padding:8px 12px;background:#fff;border:0.5px solid #e0e0d8;border-radius:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:#1a7a4a;flex-shrink:0}
+.dot.spin{background:#854f0b;animation:pulse 1s infinite}
+.dot.err{background:#a32d2d}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.tabs{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
+.tb{padding:7px 16px;font-size:13px;border:0.5px solid #ccc;border-radius:8px;background:#fff;color:#666;cursor:pointer}
+.tb.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.tb:hover:not(.on){background:#f0f0ee}
+.mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.25rem}
+.mc{background:#ebebea;border-radius:8px;padding:13px 15px}
+.ml{font-size:12px;color:#666;margin-bottom:5px;line-height:1.3}
+.mv{font-size:20px;font-weight:500}
+.ms{font-size:11px;color:#888;margin-top:3px}
+.mv.g{color:#1a7a4a}.mv.b{color:#185fa5}.mv.o{color:#854f0b}
+.card{background:#fff;border:0.5px solid #e0e0d8;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.ct{font-size:12px;font-weight:500;color:#888;margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em}
+.row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:0.5px solid #ebebea;font-size:14px}
+.row:first-of-type{border-top:none}
+.rl{color:#666}.rv{font-weight:500}
+.rv.g{color:#1a7a4a}.rv.b{color:#185fa5}
+.bg{height:8px;background:#ebebea;border-radius:4px;overflow:hidden;margin:5px 0 2px}
+.bf{height:100%;border-radius:4px;transition:width .4s}
+.dv{height:0.5px;background:#ebebea;margin:.75rem 0}
+.ht{font-size:12px;color:#888;margin-top:3px;margin-bottom:6px}
+.ir{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ir label{font-size:13px;color:#666;min-width:150px}
+.ir input{flex:1;font-size:14px;padding:6px 10px;border:0.5px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
+.ir input:focus{outline:none;border-color:#888}
+.btn{font-size:13px;padding:8px 16px;border:0.5px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;width:100%;margin-top:4px}
+.btn:hover{background:#f5f5f3}.btn:active{transform:scale(.98)}
+.bdg{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;margin-left:6px}
+.bdg.ok{background:#eaf3de;color:#3b6d11}.bdg.wn{background:#fef3e2;color:#854f0b}.bdg.no{background:#fde8e8;color:#a32d2d}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.gc{background:#f5f5f3;border-radius:8px;padding:11px 13px}
+.gcl{font-size:11px;color:#888;margin-bottom:3px}.gcv{font-size:17px;font-weight:500}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px}
+.fb{background:#f5f5f3;border-radius:8px;padding:12px 14px}
+.fbl{font-size:11px;color:#888;margin-bottom:4px}.fbv{font-size:17px;font-weight:500}
+.hi{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:0.5px solid #ebebea;font-size:13px;gap:8px}
+.hi:first-of-type{border-top:none}
+.tg{font-size:11px;padding:2px 6px;border-radius:4px;margin-left:3px}
+.tg.pr{background:#e6f1fb;color:#185fa5}.tg.po{background:#eaf3de;color:#3b6d11}.tg.bk{background:#fef3e2;color:#854f0b}
+.dl{font-size:11px;padding:2px 7px;border:0.5px solid #ccc;border-radius:4px;background:transparent;color:#888;cursor:pointer;flex-shrink:0}
+.dl:hover{background:#fde8e8;color:#a32d2d}
+.dh{font-size:12px;min-height:16px;margin-bottom:10px}
+.sn{font-size:12px;padding:6px 0;display:none}
+.sn.ok{color:#1a7a4a}.sn.er{color:#a32d2d}
+.wr{display:grid;grid-template-columns:90px 1fr 90px 70px 55px;gap:8px;align-items:center;padding:8px 0;border-top:0.5px solid #ebebea;font-size:13px}
+.wr:first-of-type{border-top:none}
+.wh{display:grid;grid-template-columns:90px 1fr 90px 70px 55px;gap:8px;padding:0 0 8px;font-size:11px;color:#888;font-weight:500;border-bottom:0.5px solid #ebebea;margin-bottom:2px}
+.wc{background:#f5f5f3;margin:0 -1.25rem;padding:8px 1.25rem}
+.gr{padding:10px 0;border-top:0.5px solid #ebebea}
+.gr:first-of-type{border-top:none}
+.grm{display:flex;justify-content:space-between;align-items:center}
+.gre{display:none;margin-top:10px;padding:12px;background:#f5f5f3;border-radius:8px}
+.gre.op{display:block}
+.ger{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.ger input{flex:1;font-size:14px;padding:6px 10px;border:0.5px solid #ccc;border-radius:8px;background:#fff;color:#1a1a1a}
+.gsb{font-size:12px;padding:6px 14px;border:none;border-radius:8px;background:#1a1a1a;color:#fff;cursor:pointer}
+.gcb{font-size:12px;padding:6px 14px;border:0.5px solid #ccc;border-radius:8px;background:transparent;color:#666;cursor:pointer}
+.eb{font-size:11px;padding:2px 10px;border:0.5px solid #ccc;border-radius:4px;background:transparent;color:#666;cursor:pointer}
+.eb:hover{background:#f0f0ee}
+.gsn{font-size:12px;color:#1a7a4a;margin-top:6px;display:none}
+.empty{font-size:13px;color:#aaa}
+@media(max-width:500px){
+  .ir{flex-direction:column;align-items:flex-start}
+  .ir label{min-width:unset}.ir input{width:100%}
+  .g2,.g3{grid-template-columns:1fr}
+  .wr,.wh{grid-template-columns:70px 1fr 80px 60px 45px;font-size:12px}
+}
+</style>
+</head>
+<body>
+<h1>МАНГАЛOFT</h1>
+<p class="sub">Финансовый дашборд · синхронизация с Google Sheets</p>
+<div class="sync"><div class="dot spin" id="sdot"></div><span id="stxt">Загрузка данных...</span></div>
+<div class="tabs">
+  <button class="tb on" onclick="sv('month')">Месяц</button>
+  <button class="tb" onclick="sv('weeks')">Недели</button>
+  <button class="tb" onclick="sv('year')">Год</button>
+  <button class="tb" onclick="sv('add')">+ Поступление</button>
+  <button class="tb" onclick="sv('goal')">Цели</button>
+</div>
+<div id="vm"></div>
+<div id="vw" style="display:none"></div>
+<div id="vy" style="display:none"></div>
+<div id="va" style="display:none"></div>
+<div id="vg" style="display:none"></div>
+
+<script>
+const API='https://script.google.com/macros/s/AKfycbxG5tjxJbolSEIS5_-LWpzXT2rCZhL9S9SbRNb0VLaK607ZhM9lx7QV6fW33SeUyGbXvA/exec';
+const DV=0.08,PL=0.02,DG=2500000;
+const MN=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+let view='month',pays=[],gls={},totPil=0,yrCh=null,wkCh=null,ready=false;
+
+function fmt(n){return Math.round(n).toLocaleString('ru-RU')+' ₽'}
+function tds(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function gl(mk){return gls[mk]||DG}
+function ny(){return new Date().getFullYear()}
+function nm(){return new Date().getMonth()}
+function gmp(mk){return pays.filter(p=>p.dateVal&&String(p.dateVal).slice(0,7)===mk)}
+function d2s(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+
+function ss2(status,text){
+  const dot=document.getElementById('sdot'),txt=document.getElementById('stxt');
+  if(!dot||!txt)return;
+  dot.className='dot'+(status==='load'?' spin':status==='err'?' err':'');
+  txt.textContent=text;
+}
+
+async function apiCall(data){
+  const r=await fetch(API+'?t='+Date.now(),{method:'POST',body:JSON.stringify(data)});
+  return r.json();
+}
+
+async function load(){
+  ss2('load','Загрузка из Google Sheets...');
+  try{
+    const res=await apiCall({type:'get'});
+    if(res.pays)pays=res.pays.map(p=>({...p,tot:+p.tot,pre:+p.pre,pst:+p.pst,pl:+p.pl,dv2:+p.dv2,ts:new Date(p.dateVal).getTime(),dd:new Date(p.dateVal+'T12:00:00').toLocaleDateString('ru-RU'),bk:p.bk==='да'||p.bk===true}));
+    if(res.goals)gls=res.goals;
+    totPil=pays.reduce((s,p)=>s+(+p.pl||0),0);
+    ss2('ok','✓ Синхронизировано с Google Sheets');
+  }catch(e){ss2('err','Нет соединения — данные не загружены');}
+  ready=true;sv('month');
+}
+
+async function persist(data){
+  ss2('load','Сохраняю...');
+  try{await apiCall(data);ss2('ok','✓ Сохранено в Google Sheets');}
+  catch(e){ss2('err','Ошибка сохранения');}
+}
+
+function sv(v){
+  view=v;
+  ['month','weeks','year','add','goal'].forEach((n,i)=>{
+    document.querySelectorAll('.tb')[i].classList.toggle('on',n===v);
+    document.getElementById('v'+n[0]).style.display=n===v?'block':'none';
+  });
+  if(!ready)return;
+  if(v==='month')rM();if(v==='weeks')rW();if(v==='year')rY();if(v==='add')rA();if(v==='goal')rG();
+}
+
+function pb(tot,goal,label){
+  const pct=tot>0?Math.round(tot/goal*100):0,miss=Math.max(goal-tot,0);
+  let bc,bdg,bc2;
+  if(pct>=100){bc='#1a7a4a';bdg='Выполнено';bc2='ok';}
+  else if(pct>=60){bc='#854f0b';bdg='В процессе';bc2='wn';}
+  else{bc='#a32d2d';bdg='Отстаём';bc2='no';}
+  return `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+    <span style="font-size:13px;font-weight:500">${label}: ${fmt(goal)} <span class="bdg ${bc2}">${bdg}</span></span>
+    <span style="font-size:20px;font-weight:500;color:${bc}">${pct}%</span></div>
+  <div class="bg"><div class="bf" style="width:${Math.min(pct,100)}%;background:${bc}"></div></div>
+  <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-top:5px">
+    <span>Факт: ${fmt(tot)}</span><span>${miss>0?'Осталось: '+fmt(miss):'Цель выполнена!'}</span></div>`;
+}
+
+function rM(){
+  const mk=tds().slice(0,7),pp=gmp(mk);
+  const tot=pp.reduce((s,p)=>s+p.tot,0),pre=pp.reduce((s,p)=>s+p.pre,0),pst=pp.reduce((s,p)=>s+p.pst,0);
+  const div=tot*DV,pil=tot*PL,rem=tot-div-pil,goal=gl(mk),miss=Math.max(goal-tot,0);
+  const now=new Date(),dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(),dp=now.getDate(),dl=dim-dp;
+  const dr=dp>0?tot/dp:0,fc=Math.round(tot+dr*dl),npd=dl>0?Math.round(miss/dl):0;
+  const p2=tot>0?Math.round(pre/tot*100):0,po=tot>0?Math.round(pst/tot*100):0;
+  document.getElementById('vm').innerHTML=`
+    <div class="card">${pb(tot,goal,'Цель на месяц')}
+      <div class="g2">
+        <div class="gc"><div class="gcl">Предоплаты</div><div class="gcv" style="color:#185fa5">${fmt(pre)}</div><div style="font-size:11px;color:#888;margin-top:2px">цель: ${fmt(goal*.6)}</div></div>
+        <div class="gc"><div class="gcl">Доплаты</div><div class="gcv" style="color:#1a7a4a">${fmt(pst)}</div><div style="font-size:11px;color:#888;margin-top:2px">цель: ${fmt(goal*.4)}</div></div>
+        <div class="gc"><div class="gcl">Дивиденды (8%)</div><div class="gcv" style="color:#1a7a4a">${fmt(div)}</div><div style="font-size:11px;color:#888;margin-top:2px">цель: ${fmt(goal*DV)}</div></div>
+        <div class="gc"><div class="gcl">Подушка (2%)</div><div class="gcv" style="color:#185fa5">${fmt(pil)}</div><div style="font-size:11px;color:#888;margin-top:2px">цель: ${fmt(goal*PL)}</div></div>
+      </div></div>
+    <div class="card"><div class="ct">Прогноз до конца месяца</div>
+      <div class="g3">
+        <div class="fb"><div class="fbl">Осталось дней</div><div class="fbv">${dl}</div></div>
+        <div class="fb"><div class="fbl">Темп сейчас</div><div class="fbv" style="color:#185fa5">${fmt(Math.round(dr))}<span style="font-size:11px;color:#888">/день</span></div></div>
+        <div class="fb"><div class="fbl">Прогноз месяца</div><div class="fbv" style="color:${fc>=goal?'#1a7a4a':'#a32d2d'}">${fmt(fc)}</div></div>
+      </div>${miss>0&&dl>0?`<div style="font-size:13px;color:#666;padding:6px 0">Нужно в день: <span style="font-weight:500;color:#854f0b">${fmt(npd)}</span></div>`:''}</div>
+    <div class="mg">
+      <div class="mc"><div class="ml">Поступлений всего</div><div class="mv">${fmt(tot)}</div><div class="ms">${pp.length} платежей</div></div>
+      <div class="mc"><div class="ml">К выводу (8%)</div><div class="mv g">${fmt(div)}</div><div class="ms">дивиденды</div></div>
+      <div class="mc"><div class="ml">В подушку (2%)</div><div class="mv b">${fmt(pil)}</div><div class="ms">накопительный счёт</div></div>
+      <div class="mc"><div class="ml">Всего в подушке</div><div class="mv o">${fmt(totPil)}</div><div class="ms">за всё время</div></div></div>
+    ${tot>0?`<div class="card"><div class="ct">Распределение</div>
+      <div class="row"><span class="rl">Предоплаты</span><span class="rv b">${fmt(pre)} <span style="font-size:12px;font-weight:400;color:#888">${p2}%</span></span></div>
+      <div class="bg"><div class="bf" style="width:${p2}%;background:#185fa5"></div></div>
+      <div class="row"><span class="rl">Доплаты</span><span class="rv g">${fmt(pst)} <span style="font-size:12px;font-weight:400;color:#888">${po}%</span></span></div>
+      <div class="bg"><div class="bf" style="width:${po}%;background:#1a7a4a"></div></div>
+      <div class="dv"></div>
+      <div class="row"><span class="rl">Дивиденды (8%)</span><span class="rv g">${fmt(div)}</span></div><div class="ht">Личный доход — доступно к выводу</div>
+      <div class="row"><span class="rl">Подушка (2%)</span><span class="rv b">${fmt(pil)}</span></div><div class="ht">На накопительный счёт Т-Банка</div>
+      <div class="row"><span class="rl">Остаток в обороте</span><span class="rv">${fmt(rem)}</span></div></div>`:''}`;
+}
+
+function gWks(yr,mo){
+  const wks=[],last=new Date(yr,mo+1,0);let cur=new Date(yr,mo,1),wn=1;
+  while(cur<=last){const ws=new Date(cur),dow=cur.getDay(),dte=dow===0?6:7-dow;let we=new Date(cur);we.setDate(cur.getDate()+dte);if(we>last)we=new Date(last);wks.push({num:wn,start:new Date(ws),end:new Date(we)});cur=new Date(we);cur.setDate(cur.getDate()+1);wn++;}return wks;
+}
+
+function rW(){
+  const now=new Date(),yr=now.getFullYear(),mo=now.getMonth();
+  const mk=`${yr}-${String(mo+1).padStart(2,'0')}`,wks=gWks(yr,mo),td=tds(),mg=gl(mk),dim=new Date(yr,mo+1,0).getDate();
+  const wd=wks.map(w=>{
+    const ss=d2s(w.start),es=d2s(w.end);
+    const wp=pays.filter(p=>p.dateVal&&String(p.dateVal).slice(0,10)>=ss&&String(p.dateVal).slice(0,10)<=es&&String(p.dateVal).slice(0,7)===mk);
+    const fact=wp.reduce((s,p)=>s+p.tot,0),diw=Math.round((w.end-w.start)/86400000)+1,wg=Math.round(mg/dim*diw);
+    return{...w,fact,wg,pct:wg>0?Math.round(fact/wg*100):0,isCur:td>=ss&&td<=es,isPast:es<td,ss,es};
+  });
+  const tf=wd.reduce((s,w)=>s+w.fact,0),op=mg>0?Math.round(tf/mg*100):0;
+  document.getElementById('vw').innerHTML=`
+    <div class="card"><div class="ct">Недели — ${MN[mo]} ${yr}</div>
+      <div style="font-size:13px;color:#888;margin-bottom:14px">Цель на месяц: ${fmt(mg)} · пропорционально дням</div>
+      <div class="wh"><span>Неделя</span><span>Прогресс</span><span style="text-align:right">Факт</span><span style="text-align:right">Цель</span><span style="text-align:right">%</span></div>
+      ${wd.map(w=>{
+        const c=w.pct>=100?'#1a7a4a':w.pct>=60?'#854f0b':'#a32d2d',gray=!w.isPast&&!w.isCur;
+        const dr=`${w.start.getDate()}.${String(w.start.getMonth()+1).padStart(2,'0')}–${w.end.getDate()}.${String(w.end.getMonth()+1).padStart(2,'0')}`;
+        return `<div class="wr${w.isCur?' wc':''}">
+          <div><div style="font-weight:500">${w.isCur?'Текущая':'Нед. '+w.num}</div><div style="font-size:11px;color:#888">${dr}</div></div>
+          <div><div class="bg" style="margin:0"><div class="bf" style="width:${gray?0:Math.min(w.pct,100)}%;background:${gray?'#ccc':c}"></div></div></div>
+          <div style="text-align:right;font-weight:500;color:${w.fact>0?c:'#aaa'}">${w.fact>0?fmt(w.fact):'—'}</div>
+          <div style="text-align:right;color:#888;font-size:12px">${fmt(w.wg)}</div>
+          <div style="text-align:right;font-weight:500;color:${gray?'#aaa':c}">${gray?'—':w.pct+'%'}</div>
+        </div>`;}).join('')}
+      <div class="dv"></div>
+      <div class="row" style="border-top:none"><span style="font-weight:500">Итого за месяц</span>
+        <span style="display:flex;align-items:center;gap:10px">
+          <span style="color:#888;font-size:13px">цель: ${fmt(mg)}</span>
+          <span style="font-weight:500;font-size:15px">${fmt(tf)}</span>
+          <span class="bdg ${op>=100?'ok':op>=60?'wn':'no'}">${op}%</span>
+        </span></div></div>
+    <div class="card"><div class="ct">График по неделям</div>
+      <div style="position:relative;height:200px"><canvas id="wkc"></canvas></div></div>`;
+  setTimeout(()=>{
+    if(wkCh)wkCh.destroy();
+    const ctx=document.getElementById('wkc');if(!ctx)return;
+    wkCh=new Chart(ctx,{type:'bar',data:{labels:wd.map(w=>'Нед '+w.num),datasets:[
+      {label:'Факт',data:wd.map(w=>w.fact),backgroundColor:wd.map(w=>w.isCur?'#378ADD':w.isPast?'#97C459':'#B5D4F4'),borderRadius:4,order:2},
+      {label:'Цель',data:wd.map(w=>w.wg),type:'line',borderColor:'#E24B4A',borderWidth:2,borderDash:[5,4],pointRadius:0,fill:false,order:1}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Math.round(c.raw).toLocaleString('ru-RU')} ₽`}}},scales:{x:{grid:{display:false},ticks:{color:'#888'}},y:{grid:{color:'rgba(0,0,0,.06)'},ticks:{color:'#888',callback:v=>Math.round(v/1000)+'к'}}}}});
+  },80);
+}
+
+function rY(){
+  const yr=ny(),md=MN.map((name,i)=>{const mk=`${yr}-${String(i+1).padStart(2,'0')}`;const pp=gmp(mk);return{name,tot:pp.reduce((s,p)=>s+p.tot,0),goal:gl(mk)};});
+  const ty=md.reduce((s,m)=>s+m.tot,0),am=Math.round(ty/12),best=md.reduce((b,m)=>m.tot>b.tot?m:b,md[0]);
+  document.getElementById('vy').innerHTML=`
+    <div class="mg">
+      <div class="mc"><div class="ml">Оборот за ${yr} год</div><div class="mv">${fmt(ty)}</div></div>
+      <div class="mc"><div class="ml">Среднее в месяц</div><div class="mv b">${fmt(am)}</div></div>
+      <div class="mc"><div class="ml">Лучший месяц</div><div class="mv g">${best.tot>0?best.name+' '+fmt(best.tot):'—'}</div></div></div>
+    <div class="card"><div class="ct">Факт vs цель — ${yr}</div>
+      <div style="position:relative;height:250px"><canvas id="yrc"></canvas></div></div>
+    <div class="card"><div class="ct">По месяцам</div>
+      ${md.map(m=>{const p=m.goal>0?Math.round(m.tot/m.goal*100):0,c=p>=100?'#1a7a4a':p>=60?'#854f0b':'#aaa';
+      return `<div class="row"><span class="rl" style="min-width:36px">${m.name}</span><span style="flex:1;margin:0 12px"><div class="bg"><div class="bf" style="width:${Math.min(p,100)}%;background:${c}"></div></div></span><span style="font-size:13px;font-weight:500;color:${c};min-width:80px;text-align:right">${m.tot>0?fmt(m.tot):'—'}</span></div>`;}).join('')}</div>`;
+  setTimeout(()=>{
+    if(yrCh)yrCh.destroy();
+    const ctx=document.getElementById('yrc');if(!ctx)return;
+    yrCh=new Chart(ctx,{type:'bar',data:{labels:MN,datasets:[
+      {label:'Факт',data:md.map(m=>m.tot),backgroundColor:'#378ADD',borderRadius:4,order:2},
+      {label:'Цель',data:md.map(m=>m.goal),type:'line',borderColor:'#E24B4A',borderWidth:2,borderDash:[5,4],pointRadius:0,fill:false,order:1}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${Math.round(c.raw).toLocaleString('ru-RU')} ₽`}}},scales:{x:{grid:{display:false},ticks:{color:'#888',autoSkip:false,maxRotation:0}},y:{grid:{color:'rgba(0,0,0,.06)'},ticks:{color:'#888',callback:v=>Math.round(v/1000)+'к'}}}}});
+  },80);
+}
+
+function rA(){
+  document.getElementById('va').innerHTML=`
+    <div class="card"><div class="ct">Добавить поступление</div>
+      <div class="ir"><label>Дата поступления</label><input type="date" id="id" max="${tds()}" value="${tds()}" oninput="uh()"></div>
+      <div class="dh" id="dh" style="color:#1a7a4a">Сегодня</div>
+      <div class="ir"><label>Предоплата (продажа) ₽</label><input type="number" id="ip" placeholder="300 000" step="1000" min="0"></div>
+      <div class="ir"><label>Доплата (производство) ₽</label><input type="number" id="io" placeholder="150 000" step="1000" min="0"></div>
+      <button class="btn" onclick="addPay()">+ Добавить поступление</button>
+      <div class="sn" id="sn"></div></div>
+    <div class="card"><div class="ct">История поступлений</div><div id="hl"></div></div>`;
+  rH();
+}
+
+function uh(){
+  const v=document.getElementById('id').value,el=document.getElementById('dh');if(!el||!v)return;
+  const t=tds();
+  if(v===t){el.textContent='Сегодня';el.style.color='#1a7a4a';}
+  else if(v<t){el.textContent='Задним числом: '+new Date(v+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});el.style.color='#854f0b';}
+}
+
+function rH(){
+  const el=document.getElementById('hl');if(!el)return;
+  if(!pays.length){el.innerHTML='<div class="empty">Поступлений пока нет</div>';return;}
+  el.innerHTML=[...pays].slice(0,30).map(p=>`<div class="hi">
+    <span style="flex:1;min-width:0"><span style="font-weight:500">${fmt(p.tot)}</span>${p.pre>0?`<span class="tg pr">предоплата ${fmt(p.pre)}</span>`:''}${p.pst>0?`<span class="tg po">доплата ${fmt(p.pst)}</span>`:''}${p.bk?`<span class="tg bk">задним числом</span>`:''}</span>
+    <span style="color:#888;font-size:12px;white-space:nowrap;margin-left:6px">${p.dd||p.dateVal}</span>
+    <button class="dl" onclick="delPay(${p.id})">удалить</button>
+  </div>`).join('');
+}
+
+function showSN(txt,ok){
+  const s=document.getElementById('sn');if(!s)return;
+  s.textContent=txt;s.className='sn '+(ok?'ok':'er');s.style.display='block';
+  setTimeout(()=>s.style.display='none',2500);
+}
+
+async function addPay(){
+  const pre=parseFloat(document.getElementById('ip').value)||0;
+  const pst=parseFloat(document.getElementById('io').value)||0;
+  const dv=document.getElementById('id').value;
+  if(!pre&&!pst)return;if(!dv)return;
+  const tot=pre+pst,pl=tot*PL,id=Date.now();
+  const pay={id,ts:new Date(dv+'T12:00:00').getTime(),dateVal:dv,pre,pst,tot,pl,dv2:tot*DV,dd:new Date(dv+'T12:00:00').toLocaleDateString('ru-RU'),bk:dv<tds()};
+  pays.push(pay);pays.sort((a,b)=>b.ts-a.ts);totPil+=pl;
+  rH();showSN('Сохраняю...',true);
+  try{await persist({type:'payment',action:'add',...pay});showSN('✓ Сохранено в Google Sheets',true);}
+  catch(e){showSN('Ошибка сохранения',false);}
+  document.getElementById('ip').value='';document.getElementById('io').value='';
+  document.getElementById('id').value=tds();uh();
+}
+
+async function delPay(id){
+  const i=pays.findIndex(p=>p.id===id);if(i===-1)return;
+  totPil-=pays[i].pl;pays.splice(i,1);rH();
+  try{await persist({type:'payment',action:'delete',id});}catch(e){}
+}
+
+function rG(){
+  const yr=ny();
+  document.getElementById('vg').innerHTML=`
+    <div class="card"><div class="ct">Цели по месяцам — ${yr}</div>
+      <div style="font-size:13px;color:#888;margin-bottom:16px">Нажмите «изменить» чтобы задать цель на любой месяц</div>
+      ${MN.map((name,i)=>{
+        const mk=`${yr}-${String(i+1).padStart(2,'0')}`,g=gl(mk),isCur=i===nm();
+        const wg=Math.round(g/new Date(yr,i+1,0).getDate()*7);
+        return `<div class="gr">
+          <div class="grm" style="${isCur?'background:#f5f5f3;margin:0 -1.25rem;padding:8px 1.25rem;':''}">
+            <span style="font-size:14px;color:#666">${name}${isCur?' <span style="font-size:11px;color:#185fa5">текущий</span>':''}</span>
+            <span style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:11px;color:#aaa">~${fmt(wg)}/нед</span>
+              <span style="font-size:14px;font-weight:500" id="gv${mk}">${fmt(g)}</span>
+              <button class="eb" onclick="tge('${mk}')">изменить</button>
+            </span></div>
+          <div class="gre" id="ge${mk}">
+            <div style="font-size:12px;color:#888;margin-bottom:8px">Новая цель — ${name} ${yr}</div>
+            <div class="ger">
+              <input type="number" id="gi${mk}" value="${g}" step="50000" min="100000">
+              <button class="gsb" onclick="saveGoal('${mk}')">Сохранить</button>
+              <button class="gcb" onclick="tge('${mk}')">Отмена</button>
+            </div>
+            <div class="gsn" id="gsn${mk}"></div>
+          </div></div>`;}).join('')}
+      <div class="dv"></div>
+      <div style="font-size:13px;color:#888">По умолчанию: <span style="font-weight:500;color:#1a1a1a">${fmt(DG)}</span></div></div>`;
+}
+
+function tge(mk){
+  const a=document.getElementById('ge'+mk);if(!a)return;
+  const was=a.classList.contains('op');
+  document.querySelectorAll('.gre').forEach(x=>x.classList.remove('op'));
+  if(!was)a.classList.add('op');
+}
+
+async function saveGoal(mk){
+  const inp=document.getElementById('gi'+mk);if(!inp)return;
+  const n=parseFloat(inp.value);if(isNaN(n)||n<=0)return;
+  gls[mk]=n;
+  const el=document.getElementById('gv'+mk);if(el)el.textContent=fmt(n);
+  const sn=document.getElementById('gsn'+mk);
+  if(sn){sn.textContent='Сохраняю...';sn.style.display='block';}
+  try{
+    await persist({type:'goal',mk,goal:n});
+    if(sn){sn.textContent='✓ Сохранено';setTimeout(()=>{sn.style.display='none';tge(mk);},1200);}
+  }catch(e){if(sn){sn.textContent='Ошибка';setTimeout(()=>sn.style.display='none',2000);}}
+}
+
+load();
+</script>
+</body>
+</html>
